@@ -247,10 +247,38 @@
             (add-hook 'magit-mode-hook
                       (lambda () (hl-line-mode -1)))
             (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
-            (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
+            (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
+            ;; (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
+            ;; (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
+            (remove-hook 'magit-status-sections-hook 'magit-insert-tags-header)
+            (remove-hook 'magit-status-sections-hook 'magit-insert-status-headers)
+            (remove-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-pushremote)
+            (remove-hook 'magit-status-sections-hook 'magit-insert-unpulled-from-pushremote)
+            (remove-hook 'magit-status-sections-hook 'magit-insert-unpulled-from-upstream)
+            (remove-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-upstream-or-recent))
 
   :bind ("C-x g" . magit-status)
   :delight)
+
+(use-package git-gutter
+  :doc "Shows modified lines"
+  :ensure t
+  :bind (("C-x q" . git-gutter:revert-hunk)
+         ("C-c C-s" . git-gutter:stage-hunk)
+         ("C-x p" . git-gutter:previous-hunk)
+         ("C-x n" . git-gutter:next-hunk)
+         ("C-x C-p" . git-gutter:popup-hunk))
+  :hook (prog-mode . git-gutter-mode)
+  :config (setq git-gutter:update-interval 2)
+  :delight)
+
+(use-package git-gutter-fringe
+  :ensure t
+  :config
+  (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
+  (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
+  (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
+
 
 (use-package ace-jump-mode
   :doc "Jump around the visible buffer using 'Head Chars'"
@@ -511,6 +539,7 @@
   :ensure t
   :config (progn (setq highlight-symbol-idle-delay 0.5)
                  (add-hook 'clojure-mode-hook (lambda ()  (idle-highlight-mode t)))
+                 (add-hook 'ruby-mode-hook (lambda ()  (idle-highlight-mode t)))
                  (add-hook 'emacs-lisp-mode-hook (lambda ()  (idle-highlight-mode t)))))
 
 
@@ -656,6 +685,7 @@
          (add-to-list 'exec-path "/Users/mourjosen/software/elixir-ls-compiled-442c6982755010f37c5693134056ee57a78ff196")
 
          (add-to-list 'exec-path "/Users/mourjosen/Library/Python/3.8/bin")
+         (setq lsp-enable-symbol-highlighting nil)
          (setq lsp-enable-file-watchers nil))
   :hook (progn ;; replace XXX-mode with concrete major-mode(e. g. python-mode)
           (elixir-mode . lsp)
@@ -1108,5 +1138,12 @@
 
 (provide 'init)
 (server-start)
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;; SELF NOTES
+;; C-h f (or M-x describe-function ) will show you the bindings for a command.
+;; You are correct, C-h b (or M-x describe-bindings ) will show you all bindings. C-h m ( M-x describe-mode ) is also handy to list bindings by mode.
+;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;;; init.el ends here

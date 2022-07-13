@@ -21,4 +21,5 @@
  '(diff-refine-added ((t (:background "DarkOliveGreen4" :foreground "White"))))
  '(diff-refine-removed ((t (:background "LightPink4" :foreground "white"))))
  '(font-lock-comment-delimiter-face ((t (:foreground "#616e88" :slant italic))))
- '(font-lock-comment-face ((t (:foreground "#616e88" :slant italic)))))
+ '(font-lock-comment-face ((t (:foreground "#616e88" :slant italic))))
+ '(hl-line ((t (:extend t :background "#323844")))))
