@@ -888,6 +888,9 @@
 (global-set-key (kbd "M-o") 'other-window)
 (global-set-key (kbd "C-c s") 'swap-windows)
 (global-set-key (kbd "C-c r") 'rename-buffer-and-file)
+(global-set-key (kbd "C-x c g a") 'helm-do-ag-project-root)
+(global-set-key (kbd "C-x c g s") 'helm-do-ag)
+(global-set-key (kbd "C-x c g g") 'helm-do-grep-ag)
 
 
 (require 'saveplace)

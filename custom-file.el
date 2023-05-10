@@ -9,7 +9,7 @@
  '(global-diff-hl-mode t)
  '(inf-elixir-prefer-umbrella nil)
  '(package-selected-packages
-   '(dracula-theme inf-elixir elixir-yasnippets pdf-tools xref xref-1\.1\.0 which-key use-package reformatter rainbow-identifiers protobuf-mode powerline paxedit nord-theme mix magit idle-highlight-mode highlight-symbol helm-projectile helm-descbinds helm-ag git-timemachine git-gutter flycheck-joker flycheck-dialyxir flycheck-credo flycheck-clj-kondo exunit expand-region exec-path-from-shell ewal-spacemacs-themes elixir-mode dumb-jump diminish diff-hl delight define-word dap-mode counsel company clojure-mode-extra-font-locking clj-refactor ace-jump-mode)))
+   '(lsp-java yasnippet which-key use-package toggle-test rainbow-identifiers powerline paxedit nord-theme multiple-cursors magit idle-highlight-mode highlight-symbol helm-projectile helm-descbinds helm-ag git-timemachine git-gutter flycheck-joker flycheck-clj-kondo expand-region exec-path-from-shell dumb-jump diminish delight define-word counsel company clojure-mode-extra-font-locking cider aggressive-indent ace-jump-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
