@@ -5,6 +5,8 @@
 (add-to-list 'package-archives
              '("melpa" . "http://melpa.org/packages/") t)
 
+(add-to-list 'image-types 'svg)
+
 ;; Load and activate emacs packages. Do this first so that the packages are loaded before
 ;; you start trying to modify them.  This also sets the load path.
 (package-initialize)
@@ -14,7 +16,7 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
-
+(setenv "LSP_USE_PLISTS" "true")
 
 ;; ───────────────────────────────── Use better defaults ────────────────────────────────
 (setq-default
@@ -99,7 +101,7 @@
 
 
 
-;; ───────────────────────── Better interaction with X clipboard ────────────────────────
+;; ───────────────────────── better interaction with X clipboard ────────────────────────
 (setq-default
  ;; Makes killing/yanking interact with the clipboard.
  x-select-enable-clipboard t
@@ -230,54 +232,82 @@
   :bind ("C-x C-b" . ibuffer)
   :delight)
 
-(use-package projectile
-  :doc "Project navigation"
+;; (use-package projectile
+;;   :doc "Project navigation"
+;;   :ensure t
+;;   :config
+;;   ;; Use it everywhere
+;;   (projectile-mode t)
+;;   ;; :bind ("C-x f" . projectile-find-file)
+;;   :delight)
+
+(use-package find-file-in-project
+  :config (setq ffip-use-rust-fd t)
   :ensure t
-  :config
-  ;; Use it everywhere
-  (projectile-mode t)
-  :bind ("C-x f" . projectile-find-file)
-  :delight)
+  )
+
+(use-package rg
+  :ensure t)
+
+;; (use-package projectile-ripgrep
+;;   :ensure t)
 
 (use-package magit
   :doc "Git integration for Emacs"
   :ensure t
   :config (progn
-            (setf magit-diff-refine-hunk t)
+            (setf magit-diff-refine-hunk nil)
             (add-hook 'magit-mode-hook
                       (lambda () (hl-line-mode -1)))
-            (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
-            (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
             ;; (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
             ;; (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
-            (remove-hook 'magit-status-sections-hook 'magit-insert-tags-header)
-            (remove-hook 'magit-status-sections-hook 'magit-insert-status-headers)
-            (remove-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-pushremote)
-            (remove-hook 'magit-status-sections-hook 'magit-insert-unpulled-from-pushremote)
-            (remove-hook 'magit-status-sections-hook 'magit-insert-unpulled-from-upstream)
-            (remove-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-upstream-or-recent))
+            ;; (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
+            ;; (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
+            ;; (remove-hook 'magit-status-sections-hook 'magit-insert-tags-header)
+            ;; (remove-hook 'magit-status-sections-hook 'magit-insert-status-headers)
+            ;; (remove-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-pushremote)
+            ;; (remove-hook 'magit-status-sections-hook 'magit-insert-unpulled-from-pushremote)
+            ;; (remove-hook 'magit-status-sections-hook 'magit-insert-unpulled-from-upstream)
+            ;; (remove-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-upstream-or-recent)
+            )
 
   :bind ("C-x g" . magit-status)
   :delight)
 
-(use-package git-gutter
-  :doc "Shows modified lines"
-  :ensure t
-  :bind (("C-x q" . git-gutter:revert-hunk)
-         ("C-c C-s" . git-gutter:stage-hunk)
-         ("C-x p" . git-gutter:previous-hunk)
-         ("C-x n" . git-gutter:next-hunk)
-         ("C-x C-p" . git-gutter:popup-hunk))
-  :hook (prog-mode . git-gutter-mode)
-  :config (setq git-gutter:update-interval 2)
-  :delight)
+;; (use-package git-gutter
+;;   :doc "Shows modified lines"
+;;   :ensure t
+;;   :bind (("C-x q" . git-gutter:revert-hunk)
+;;          ("C-c C-s" . git-gutter:stage-hunk)
+;;          ("C-x p" . git-gutter:previous-hunk)
+;;          ("C-x n" . git-gutter:next-hunk)
+;;          ("C-x C-p" . git-gutter:popup-hunk))
+;;   :hook (prog-mode . git-gutter-mode)
+;;   :config (setq git-gutter:update-interval 2)
+;;   :delight)
 
-(use-package git-gutter-fringe
-  :ensure t
-  :config
-  (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
-  (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
-  (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
+;; (use-package git-gutter-fringe
+;;   :ensure t
+;;   :config
+;;   (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
+;;   (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
+;;   (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
+
+;; ; Bugfix for git-gutter+ and tramp, see: https://github.com/nonsequitur/git-gutter-plus/pull/39
+;; (with-eval-after-load 'git-gutter
+;;   (defun git-gutter+-remote-default-directory (dir file)
+;;     (let* ((vec (tramp-dissect-file-name file))
+;;            (method (tramp-file-name-method vec))
+;;            (user (tramp-file-name-user vec))
+;;            (domain (tramp-file-name-domain vec))
+;;            (host (tramp-file-name-host vec))
+;;            (port (tramp-file-name-port vec)))
+;;       (tramp-make-tramp-file-name method user domain host port dir)))
+
+;;   (defun git-gutter-remote-file-path (dir file)
+;;     (let ((file (tramp-file-name-localname (tramp-dissect-file-name file))))
+;;       (replace-regexp-in-string (concat "\\`" dir) "" file))))
+
 
 
 (use-package ace-jump-mode
@@ -291,6 +321,8 @@
   :ensure t
   :bind ("C-M-." . dumb-jump-go) ;; this is obsolete but still works the best ^_^
   :config (progn
+            ;; (setq dumb-jump-force-searcher 'rg)
+            (setq dumb-jump-prefer-searcher 'rg)
             (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
             (setq xref-show-definitions-function #'xref-show-definitions-completing-read))
   :delight)
@@ -463,20 +495,20 @@
   :bind ("H-l" . flyspell-learn-word-at-point))
 
 
-(use-package helm-projectile
-  :ensure t
-  :bind (("C-c p" . projectile-command-map))
-  :init (progn (require 'helm-projectile)
-               (projectile-mode)
-               (setq projectile-completion-system 'helm
-                     projectile-switch-project-action 'helm-projectile
-                     projectile-enable-caching t
-                     projectile-mode-line '(:eval (if (file-remote-p default-directory)
-                                                      " "
-                                                    (format " Ptl[%s]"
-                                                            (projectile-project-name)))))
-               (helm-projectile-on))
-  :delight)
+;; (use-package helm-projectile
+;;   :ensure t
+;;   :bind (("C-c p" . projectile-command-map))
+;;   :init (progn (require 'helm-projectile)
+;;                (projectile-mode)
+;;                (setq projectile-completion-system 'helm
+;;                      projectile-switch-project-action 'helm-projectile
+;;                      projectile-enable-caching t
+;;                      projectile-mode-line '(:eval (if (file-remote-p default-directory)
+;;                                                       " "
+;;                                                     (format " Ptl[%s]"
+;;                                                             (projectile-project-name)))))
+;;                (helm-projectile-on))
+;;   :delight)
 
 
 (use-package helm-ag
@@ -485,10 +517,21 @@
          ("C-x c g s" . helm-do-ag)
          ("C-x c g g" . helm-do-grep-ag))
   :config (progn (setq helm-ag-insert-at-point 'symbol
-                       helm-ag-fuzzy-match t
+                       helm-ag-fuzzy-match nil
                        helm-truncate-lines t
-                       helm-ag-use-agignore t))
+                       helm-ag-use-agignore t ;; --with-filename --fixed-strings --smart-case
+                       ;; This will read the .ugrep configuration in the root directory, in which test files can be ignored per repostiory with exclude=*.t
+                       helm-ag-base-command "ug --line-number --color=never --with-filename --fixed-strings --smart-case --"
+                       ;; helm-ag-base-command "rg --no-heading --no-config --line-number --no-heading --no-column --with-filename --fixed-strings --smart-case --"
+                       ))
   :delight)
+
+
+;; (use-package deadgrep
+;;   :ensure t
+;;   :bind (("C-x c g a" . deadgrep))
+;; )
+
 
 
 ;; ───────────────────────────────────── Code editing ─────────────────────────────────────
@@ -612,7 +655,7 @@
 
 ;; ──────────────────────────────── Programming languages ───────────────────────────────
 
-(use-package projectile :ensure t)
+;; (use-package projectile :ensure t)
 (use-package flycheck :ensure t)
 (use-package yasnippet
   :ensure t
@@ -666,60 +709,77 @@
 (setq company-tooltip-align-annotations t)
 
 ;; formats the buffer before saving
-(add-hook 'before-save-hook 'tide-format-before-save)
+;;(add-hook 'before-save-hook 'tide-format-before-save)
 
 ;; (add-hook 'typescript-mode-hook #'setup-tide-mode)
 
 
 
-(use-package lsp-mode
-  :commands lsp
-  :ensure t
-  :diminish lsp-mode
-  :init
-  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-  (progn (setq lsp-keymap-prefix "C-c l")
-         ;; (add-to-list 'exec-path "/Users/mourjosen/software/elixir-ls-1.11")
-         ;; (add-to-list 'exec-path "/Users/mourjosen/software/elixir-ls-0.7.0-compiled")
-         ;; (add-to-list 'exec-path "/Users/mourjosen/software/elixir-ls-latest-6a786d7-compiled")
-         (add-to-list 'exec-path "/Users/mourjosen/software/elixir-ls-compiled-442c6982755010f37c5693134056ee57a78ff196")
+;; (use-package lsp-mode
+;;   :commands lsp
+;;   :ensure t
+;;   :diminish lsp-mode
+;;   :init
+;;   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+;;   (progn (setq lsp-keymap-prefix "C-c l")
+;;          ;; (add-to-list 'exec-path "/Users/mourjosen/software/elixir-ls-1.11")
+;;          ;; (add-to-list 'exec-path "/Users/mourjosen/software/elixir-ls-0.7.0-compiled")
+;;          ;; (add-to-list 'exec-path "/Users/mourjosen/software/elixir-ls-latest-6a786d7-compiled")
+;;          (add-to-list 'exec-path "/Users/mourjosen/software/elixir-ls-compiled-442c6982755010f37c5693134056ee57a78ff196")
 
-         (add-to-list 'exec-path "/Users/mourjosen/Library/Python/3.8/bin")
-         (setq lsp-enable-symbol-highlighting nil)
-         (setq lsp-enable-file-watchers nil))
-  :hook (progn ;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-          (elixir-mode . lsp)
-          (python-mode . lsp)
-          ;;(javascript-mode . lsp)
-          ((js2-mode rjsx-mode) . lsp) ;; npm i -g typescript-language-server; npm i -g typescript
-          ;; if you want which-key integration
-          (lsp-mode . lsp-enable-which-key-integration))
-  :custom (lsp-headerline-breadcrumb-enable nil))
+;;          (add-to-list 'exec-path "/Users/mourjosen/Library/Python/3.8/bin")
+;;          (setq lsp-enable-symbol-highlighting nil)
+;;          (setq lsp-enable-file-watchers nil)
+;;          ;; (setq lsp-perlnavigator-include-paths ["/Users/msen/perl5/lib/perl5" "/Users/msen/repos/main"])
+;;          )
+;;   :hook (progn ;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+;;           (elixir-mode . lsp)
+;;           (python-mode . lsp)
+;;           (java-mode . lsp)
+;;           ;; (perl-mode . lsp)
+;;           ;; (cperl-mode . lsp)
+;;           ;;(javascript-mode . lsp)
+;;           ((js2-mode rjsx-mode) . lsp) ;; npm i -g typescript-language-server; npm i -g typescript
+;;           ;; if you want which-key integration
+;;           (lsp-mode . lsp-enable-which-key-integration))
+;;   :custom (lsp-headerline-breadcrumb-enable nil)
+;; )
 
 ;; optionally
 ;; (use-package lsp-ui :commands lsp-ui-mode)
 ;; if you are helm user
-(use-package helm-lsp :commands helm-lsp-workspace-symbol)
+;; (use-package helm-lsp :commands helm-lsp-workspace-symbol)
 ;; if you are ivy user
-(use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
-(use-package lsp-treemacs :commands lsp-treemacs-errors-list)
-
-(use-package company-lsp
-  :defer t
-  :config
-  (setq company-lsp-cache-candidates 'auto
-        company-lsp-async t
-        company-lsp-enable-snippet nil
-        company-lsp-enable-recompletion t))
+;; (use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
+;; (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
 
 
-(use-package dap-mode
-  :ensure t
-  :commands dap-mode)
+;; (setq lsp-java-jdt-download-url "https://www.eclipse.org/downloads/download.php?file=/jdtls/milestones/1.21.0/jdt-language-server-1.21.0-202303161431.tar.gz")
+;; (setq lsp-java-jdt-download-url "https://www.eclipse.org/downloads/download.php?file=/jdtls/milestones/1.12.0/jdt-language-server-1.12.0-202206011637.tar.gz")
+;; (use-package lsp-java
+;;   :ensure t
+;;   :init (setq lsp-java-java-path "/opt/homebrew/opt/openjdk@11/libexec/openjdk.jdk/Contents/Home/bin/java"))
 
-(require 'dap-elixir)
+;; lsp-java-jdt-download-url
+;; "https://www.eclipse.org/downloads/download.php?file=/jdtls/milestones/1.21.0/jdt-language-server-1.21.0-202303161431.tar.gz"
+
+
+;; (use-package company-lsp
+;;   :defer t
+;;   :config
+;;   (setq company-lsp-cache-candidates 'auto
+;;         company-lsp-async t
+;;         company-lsp-enable-snippet nil
+;;         company-lsp-enable-recompletion t))
+
+
+;; (use-package dap-mode
+;;   :ensure t
+;;   :commands dap-mode)
+
+;; (require 'dap-elixir)
 ;; optionally if you want to use debugger
-(dap-ui-mode)
+;; (dap-ui-mode)
 
 ;; (use-package dap-LANGUAGE) to load the dap adapter for your language
 
@@ -730,85 +790,85 @@
 ;; (use-package dap-java :after (lsp-java))
 
 
-(use-package clojure-mode
-  :doc "A major mode for editing Clojure code"
-  :ensure t
-  :config
-  ;; This is useful for working with camel-case tokens, like names of
-  ;; Java classes (e.g. JavaClassName)
-  (add-hook 'clojure-mode-hook #'subword-mode)
+;; (use-package clojure-mode
+;;   :doc "A major mode for editing Clojure code"
+;;   :ensure t
+;;   :config
+;;   ;; This is useful for working with camel-case tokens, like names of
+;;   ;; Java classes (e.g. JavaClassName)
+;;   (add-hook 'clojure-mode-hook #'subword-mode)
 
-  :delight)
+;;   :delight)
 
-(use-package clojure-mode-extra-font-locking
-  :doc "Extra syntax highlighting for clojure"
-  :ensure t
-  :delight)
+;; (use-package clojure-mode-extra-font-locking
+;;   :doc "Extra syntax highlighting for clojure"
+;;   :ensure t
+;;   :delight)
 
-(use-package cider
-  :doc "Integration with a Clojure REPL cider"
-  :ensure t
+;; (use-package cider
+;;   :doc "Integration with a Clojure REPL cider"
+;;   :ensure t
 
-  :init
-  ;; Enable minibuffer documentation
-  (add-hook 'cider-mode-hook 'eldoc-mode)
+;;   :init
+;;   ;; Enable minibuffer documentation
+;;   (add-hook 'cider-mode-hook 'eldoc-mode)
 
-  :config
-  ;; Go right to the REPL buffer when it's finished connecting
-  (setq cider-repl-pop-to-buffer-on-connect t)
-
-
-  (setq cider-repl-history-size most-positive-fixnum
-        nrepl-hide-special-buffers t
-        cider-auto-jump-to-error nil
-        cider-use-fringe-indicators nil
-        cider-stacktrace-default-filters '(tooling dup)
-        cider-stacktrace-fill-column 80
-        cider-test-show-report-on-success t
-        cider-font-lock-dynamically nil
-        cider-prefer-local-resources t
-        cider-repl-display-in-current-window nil
-        cider-eval-result-prefix ";; => "
-        cider-use-overlays t
-        cider-prompt-save-file-on-load t
-        cider-repl-prompt-function 'cider-repl-prompt-on-newline
-        nrepl-buffer-name-separator "-"
-        nrepl-buffer-name-show-port t
-        cider-annotate-completion-candidates t
-        cider-completion-annotations-include-ns 'always
-        cider-show-error-buffer 'always
-        cider-apropos-actions
-        '(("find-def" . cider--find-var)
-          ("display-doc" . cider-doc-lookup)
-          ("lookup-on-grimoire" . cider-grimoire-lookup)))
+;;   :config
+;;   ;; Go right to the REPL buffer when it's finished connecting
+;;   (setq cider-repl-pop-to-buffer-on-connect t)
 
 
-  ;; When there's a cider error, show its buffer and switch to it
-  (setq cider-auto-select-error-buffer t)
+;;   (setq cider-repl-history-size most-positive-fixnum
+;;         nrepl-hide-special-buffers t
+;;         cider-auto-jump-to-error nil
+;;         cider-use-fringe-indicators nil
+;;         cider-stacktrace-default-filters '(tooling dup)
+;;         cider-stacktrace-fill-column 80
+;;         cider-test-show-report-on-success t
+;;         cider-font-lock-dynamically nil
+;;         cider-prefer-local-resources t
+;;         cider-repl-display-in-current-window nil
+;;         cider-eval-result-prefix ";; => "
+;;         cider-use-overlays t
+;;         cider-prompt-save-file-on-load t
+;;         cider-repl-prompt-function 'cider-repl-prompt-on-newline
+;;         nrepl-buffer-name-separator "-"
+;;         nrepl-buffer-name-show-port t
+;;         cider-annotate-completion-candidates t
+;;         cider-completion-annotations-include-ns 'always
+;;         cider-show-error-buffer 'always
+;;         cider-apropos-actions
+;;         '(("find-def" . cider--find-var)
+;;           ("display-doc" . cider-doc-lookup)
+;;           ("lookup-on-grimoire" . cider-grimoire-lookup)))
 
-  ;; Where to store the cider history.
-  (setq cider-repl-history-file "~/.emacs.d/cider-history")
 
-  ;; Wrap when navigating history.
-  (setq cider-repl-wrap-history t)
+;;   ;; When there's a cider error, show its buffer and switch to it
+;;   (setq cider-auto-select-error-buffer t)
 
-  ;; Attempt to jump at the symbol under the point without having to press RET
-  (setq cider-prompt-for-symbol nil)
+;;   ;; Where to store the cider history.
+;;   (setq cider-repl-history-file "~/.emacs.d/cider-history")
 
-  ;; Always pretty print
-  (setq cider-repl-use-pretty-printing t)
+;;   ;; Wrap when navigating history.
+;;   (setq cider-repl-wrap-history t)
 
-  ;; Log client-server messaging in *nrepl-messages* buffer
-  (setq nrepl-log-messages nil)
+;;   ;; Attempt to jump at the symbol under the point without having to press RET
+;;   (setq cider-prompt-for-symbol nil)
 
-  :bind (:map
-         cider-mode-map
-         ("H-t" . cider-test-run-test)
-         ("H-n" . cider-test-run-ns-tests)
-         :map
-         cider-repl-mode-map
-         ("C-c M-o" . cider-repl-clear-buffer))
-  :delight)
+;;   ;; Always pretty print
+;;   (setq cider-repl-use-pretty-printing t)
+
+;;   ;; Log client-server messaging in *nrepl-messages* buffer
+;;   (setq nrepl-log-messages nil)
+
+;;   :bind (:map
+;;          cider-mode-map
+;;          ("H-t" . cider-test-run-test)
+;;          ("H-n" . cider-test-run-ns-tests)
+;;          :map
+;;          cider-repl-mode-map
+;;          ("C-c M-o" . cider-repl-clear-buffer))
+;;   :delight)
 
 (use-package flycheck
   :ensure t
@@ -819,43 +879,43 @@
   (setq flycheck-indication-mode nil)
   :delight)
 
-(use-package flycheck-joker
-  :after clojure-mode
-  :ensure t
-  :delight)
+;; (use-package flycheck-joker
+;;   :after clojure-mode
+;;   :ensure t
+;;   :delight)
 
-(use-package flycheck-clj-kondo
-  :ensure t
-  :after clojure-mode
-  :config
-  (dolist (checkers '((clj-kondo-clj . clojure-joker)
-                      (clj-kondo-cljs . clojurescript-joker)
-                      (clj-kondo-cljc . clojure-joker)
-                      (clj-kondo-edn . edn-joker)))
-    (flycheck-add-next-checker (car checkers) (cons 'error (cdr checkers))))
-  :delight)
+;; (use-package flycheck-clj-kondo
+;;   :ensure t
+;;   :after clojure-mode
+;;   :config
+;;   (dolist (checkers '((clj-kondo-clj . clojure-joker)
+;;                       (clj-kondo-cljs . clojurescript-joker)
+;;                       (clj-kondo-cljc . clojure-joker)
+;;                       (clj-kondo-edn . edn-joker)))
+;;     (flycheck-add-next-checker (car checkers) (cons 'error (cdr checkers))))
+;;   :delight)
 
-(use-package flycheck-credo
-  :ensure t
-  :after elixir-mode
-  :init (add-hook 'elixir-mode-hook 'mix-minor-mode)
-  :delight)
+;; (use-package flycheck-credo
+;;   :ensure t
+;;   :after elixir-mode
+;;   :init (add-hook 'elixir-mode-hook 'mix-minor-mode)
+;;   :delight)
 
-(use-package clj-refactor
-  :ensure t
-  :preface
-  (defun my-clojure-mode-hook ()
-    (clj-refactor-mode 1)
-    (yas-minor-mode 1) ;; for adding require/use/import statements
-    ;; This choice of keybinding leaves cider-macroexpand-1 unbound
-    (cljr-add-keybindings-with-prefix "C-c C-m"))
-  :config
-  (add-hook 'clojure-mode-hook #'my-clojure-mode-hook)
+;; (use-package clj-refactor
+;;   :ensure t
+;;   :preface
+;;   (defun my-clojure-mode-hook ()
+;;     (clj-refactor-mode 1)
+;;     (yas-minor-mode 1) ;; for adding require/use/import statements
+;;     ;; This choice of keybinding leaves cider-macroexpand-1 unbound
+;;     (cljr-add-keybindings-with-prefix "C-c C-m"))
+;;   :config
+;;   (add-hook 'clojure-mode-hook #'my-clojure-mode-hook)
 
-  :delight)
+;;   :delight)
 
-(use-package flycheck-dialyxir
-  :ensure t)
+;; (use-package flycheck-dialyxir
+;;   :ensure t)
 
 (use-package eldoc
   :doc "Easily accessible documentation for Elisp"
@@ -871,6 +931,8 @@
 (setq confirm-nonexistent-file-or-buffer nil)
 (set-default 'truncate-lines t)
 
+(global-set-key (kbd "C-c p s") 'find-file-in-project)
+(global-set-key (kbd "C-c p f") 'ffip-find-files-resume)
 (global-set-key (kbd "C-a") 'back-to-indentation-or-beginning-of-line)
 (global-set-key (kbd "C-7") 'comment-or-uncomment-current-line-or-region)
 (global-set-key (kbd "C-6") 'linum-mode)
@@ -889,6 +951,7 @@
 (global-set-key (kbd "C-c s") 'swap-windows)
 (global-set-key (kbd "C-c r") 'rename-buffer-and-file)
 (global-set-key (kbd "C-x c g a") 'helm-do-ag-project-root)
+;; (global-set-key (kbd "C-x c g a") 'deadgrep)
 (global-set-key (kbd "C-x c g s") 'helm-do-ag)
 (global-set-key (kbd "C-x c g g") 'helm-do-grep-ag)
 
@@ -910,56 +973,6 @@
 
 
 ;; ──────────────────────────────────── Look and feel ───────────────────────────────────
-(use-package monokai-alt-theme
-  :doc "Just another theme"
-  :disabled t
-  :ensure t
-  :config
-  (load-theme 'monokai-alt t)
-  ;; The cursor color in this theme is very confusing.
-  ;; Change it to green
-  (set-cursor-color "#9ce22e")
-  ;; Show (line,column) in mode-line
-  (column-number-mode t)
-  ;; Customize theme
-  (custom-theme-set-faces
-   'user ;; `user' refers to user settings applied via Customize.
-   '(font-lock-comment-face ((t (:foreground "tan3"))))
-   '(font-lock-doc-face ((t (:foreground "tan3"))))
-   '(mode-line ((t (:background "#9ce22e"
-                                :foreground "black"
-                                :box (:line-width 3 :color "#9ce22e")
-                                :weight normal))))
-   '(mode-line-buffer-id ((t (:foreground "black" :weight bold))))
-   '(mode-line-inactive ((t (:background "#9ce22e"
-                                         :foreground "grey50"
-                                         :box (:line-width 3 :color "#9ce22e")
-                                         :weight normal))))
-   '(org-done ((t (:foreground "chartreuse1" :weight bold))))
-   '(org-level-1 ((t (:foreground "RoyalBlue1" :weight bold))))
-   '(org-tag ((t (:foreground "#9ce22e" :weight bold)))))
-  (custom-set-faces
-   ;; custom-set-faces was added by Custom.
-   ;; If you edit it by hand, you could mess it up, so be careful.
-   ;; Your init file should contain only one such instance.
-   ;; If there is more than one, they won't work right.
-   '(font-lock-comment-face ((((class color) (min-colors 89))
-                              (:foreground "#b2b2b2" :slant italic))))
-   '(font-lock-doc-face ((((class color) (min-colors 89))
-                          (:foreground "#cc0000"))))
-   '(mode-line ((((class color) (min-colors 89))
-                 (:box nil :background "#5fafd7" :foreground "#ffffff"))))
-   '(mode-line-buffer-id ((((class color) (min-colors 89))
-                           (:box nil :foreground "#3a3a3a" :background nil :bold t))))
-   '(mode-line-inactive ((((class color) (min-colors 89))
-                          (:box nil :background "#dadada" :foreground "#9e9e9e"))))
-   '(org-done ((((class color) (min-colors 89))
-                (:bold t :weight bold :foreground "#008700" :background "#d7ff87"
-                       :box (:line-width 1 :style none)))))
-   '(org-level-1 ((((class color) (min-colors 89)) (:bold t :foreground "#5fafd7"))))
-   '(org-tag ((((class color) (min-colors 89))
-               (:background "#9e9e9e" :foreground "#ffffff" :bold t :weight bold)))))
-  :delight)
 
 (use-package ewal-spacemacs-themes
   :disabled t
@@ -988,7 +1001,7 @@
 
 (use-package "faces"
   :config
-  (set-face-attribute 'default nil :height 190)
+  (set-face-attribute 'default nil :height 180)
 
   ;; Use the 'Fantasque Sans Mono' if available
   (when (not (eq system-type 'windows-nt))
@@ -996,62 +1009,62 @@
       (set-frame-font "Fantasque Sans Mono"))))
 
 
-(use-package elixir-mode
-  :ensure t
-  :init
-  (add-hook 'elixir-mode-hook
-            (lambda ()
-              (push '(">=" . ?\u2265) prettify-symbols-alist)
-              (push '("<=" . ?\u2264) prettify-symbols-alist)
-              (push '("!=" . ?\u2260) prettify-symbols-alist)
-              (push '("==" . ?\u2A75) prettify-symbols-alist)
-              (push '("=~" . ?\u2245) prettify-symbols-alist)
-              (push '("<-" . ?\u2190) prettify-symbols-alist)
-              (push '("->" . ?\u2192) prettify-symbols-alist)
-              (push '("<-" . ?\u2190) prettify-symbols-alist)
-              (push '("|>" . ?\u25B7) prettify-symbols-alist)))
-  (add-hook 'elixir-mode-hook (lambda ()  (idle-highlight-mode t))))
+;; (use-package elixir-mode
+;;   :ensure t
+;;   :init
+;;   (add-hook 'elixir-mode-hook
+;;             (lambda ()
+;;               (push '(">=" . ?\u2265) prettify-symbols-alist)
+;;               (push '("<=" . ?\u2264) prettify-symbols-alist)
+;;               (push '("!=" . ?\u2260) prettify-symbols-alist)
+;;               (push '("==" . ?\u2A75) prettify-symbols-alist)
+;;               (push '("=~" . ?\u2245) prettify-symbols-alist)
+;;               (push '("<-" . ?\u2190) prettify-symbols-alist)
+;;               (push '("->" . ?\u2192) prettify-symbols-alist)
+;;               (push '("<-" . ?\u2190) prettify-symbols-alist)
+;;               (push '("|>" . ?\u25B7) prettify-symbols-alist)))
+;;   (add-hook 'elixir-mode-hook (lambda ()  (idle-highlight-mode t))))
 
-(use-package mix
-  :ensure t
-  :init (add-hook 'elixir-mode-hook 'mix-minor-mode))
+;; (use-package mix
+;;   :ensure t
+;;   :init (add-hook 'elixir-mode-hook 'mix-minor-mode))
 
-(use-package reformatter
-  :ensure t
-  :config
-                                        ; Adds a reformatter configuration called "+elixir-format"
-                                        ; This uses "mix format -"
-  (reformatter-define +elixir-format
-    :program "mix"
-    :args '("format" "-"))
-                                        ; defines a function that looks for the .formatter.exs file used by mix format
-  (defun +set-default-directory-to-mix-project-root (original-fun &rest args)
-    (if-let* ((mix-project-root (and buffer-file-name
-                                     (locate-dominating-file buffer-file-name
-                                                             ".formatter.exs"))))
-        (let ((default-directory mix-project-root))
-          (apply original-fun args))
-      (apply original-fun args)))
-                                        ; adds an advice to the generated function +elxir-format-region that sets the proper root dir
-                                        ; mix format needs to be run from the root directory otherwise it wont use the formatter configuration
-  (advice-add '+elixir-format-region :around #'+set-default-directory-to-mix-project-root)
-                                        ; Adds a hook to the major-mode that will add the generated function +elixir-format-on-save-mode
-                                        ; So, every time we save an elixir file it will try to find a .formatter.exs and then run mix format from
-                                        ; that file's directory
-  (add-hook 'elixir-mode-hook #'+elixir-format-on-save-mode))
+;; (use-package reformatter
+;;   :ensure t
+;;   :config
+;;                                         ; Adds a reformatter configuration called "+elixir-format"
+;;                                         ; This uses "mix format -"
+;;   (reformatter-define +elixir-format
+;;     :program "mix"
+;;     :args '("format" "-"))
+;;                                         ; defines a function that looks for the .formatter.exs file used by mix format
+;;   (defun +set-default-directory-to-mix-project-root (original-fun &rest args)
+;;     (if-let* ((mix-project-root (and buffer-file-name
+;;                                      (locate-dominating-file buffer-file-name
+;;                                                              ".formatter.exs"))))
+;;         (let ((default-directory mix-project-root))
+;;           (apply original-fun args))
+;;       (apply original-fun args)))
+;;                                         ; adds an advice to the generated function +elxir-format-region that sets the proper root dir
+;;                                         ; mix format needs to be run from the root directory otherwise it wont use the formatter configuration
+;;   (advice-add '+elixir-format-region :around #'+set-default-directory-to-mix-project-root)
+;;                                         ; Adds a hook to the major-mode that will add the generated function +elixir-format-on-save-mode
+;;                                         ; So, every time we save an elixir file it will try to find a .formatter.exs and then run mix format from
+;;                                         ; that file's directory
+;;   (add-hook 'elixir-mode-hook #'+elixir-format-on-save-mode))
 
-(use-package exunit
-  :ensure t)
+;; (use-package exunit
+;;   :ensure t)
 
 (use-package protobuf-mode
   :ensure t)
 
-(use-package diff-hl
-  :ensure t
-  :bind (:map diff-hl-mode-map
-              ("C-x p" . diff-hl-previous-hunk)
-              ("C-x n" . diff-hl-next-hunk))
-  :config (global-diff-hl-mode +1))
+;; (use-package diff-hl
+;;   :ensure t
+;;   :bind (:map diff-hl-mode-map
+;;               ("C-x p" . diff-hl-previous-hunk)
+;;               ("C-x n" . diff-hl-next-hunk))
+;;   :config (global-diff-hl-mode +1))
 
 ;; Persist history over Emacs restarts.
 (use-package savehist
@@ -1062,13 +1075,15 @@
 (use-package pdf-tools
   :ensure t)
 
-(use-package inf-elixir
-  :ensure t
-  :bind (("C-c i i" . 'inf-elixir)
-         ("C-c i p" . 'inf-elixir-project)
-         ("C-c i l" . 'inf-elixir-send-line)
-         ("C-c i r" . 'inf-elixir-send-region)
-         ("C-c i b" . 'inf-elixir-send-buffer)))
+
+
+;; (use-package inf-elixir
+;;   :ensure t
+;;   :bind (("C-c i i" . 'inf-elixir)
+;;          ("C-c i p" . 'inf-elixir-project)
+;;          ("C-c i l" . 'inf-elixir-send-line)
+;;          ("C-c i r" . 'inf-elixir-send-region)
+;;          ("C-c i b" . 'inf-elixir-send-buffer)))
 
 (when window-system (set-frame-size (selected-frame) 165 80))
 
@@ -1090,6 +1105,74 @@
 ;; (delete-other-windows)
 
 
+
+;;  ──────────────────────────────────────── *PERL* ───────────────────────────────────────
+;; Taken from https://gitlab.booking.com/ruaraujo/emacs-settings/-/blob/master/settings.org
+;;
+;; pde is a meta-package for Emacs that includes several useful packages for Perl
+;;  development.  Using it seemed like a nice idea, but it’s really old and isn’t
+;;  apparently maintained anymore, so I’ll just use the packages I need
+;;  explicitly.
+;; Let’s collect all code locations in a list first.  For now I’m only using the
+;;  app KVM, but this is probably a bad idea.  I haven’t had the need to sync my
+;;  KVMs.  When I do, I’ll probably start using a boo setting, but for now this
+;;  Just Works:
+;;
+
+(defvar perl-code-locations
+  '("/Users/msen/repos/main/lib/" "/Users/msen/perl5/lib/perl5" "/Users/msen/repos/main/slib/"))
+
+
+
+
+
+;; Let’s tell the environment where to find Perl code (this is used basically for
+;;  Perl::Critic and other local Perl modules ):
+
+(setenv "PERL5LIB" "/Users/msen/perl5/lib/perl5:/Users/msen/repos/main/lib:/Users/msen/repos/main/slib:/Users/msen/repos/main")
+
+;; Now, associate *.pl and *.pm files to cperl-mode:
+(add-to-list 'auto-mode-alist '("\\.p[lm]\\'" . cperl-mode))
+
+
+;; Then, let’s add some cperl-mode customisation.  In particular, activate
+;;  flycheck and force the perl-perlcritic checker, which uses the
+;;  Perl::Critic module.  Also, set some additional useful keybindings.
+(setf flycheck-perl-perlcritic-executable "/Users/msen/perl5/bin/perlcritic")
+(add-hook 'cperl-mode-hook
+          (lambda ()
+            ;; (setf flycheck-checker 'perl-perlcritic)
+
+            ;; (add-to-list 'eglot-server-programs
+            ;;              `((cperl-mode perl-mode) . ("/opt/homebrew/bin/perlnavigator", "--stdio")))
+            ;; (add-hook 'cperl-mode-hook 'eglot-ensure)
+            (flycheck-mode 1)
+            (local-set-key (kbd "<f5>") 'cperl-perldoc-at-point)))
+
+
+;; Also tell flycheck where our code is.
+(dolist (path perl-code-locations)
+  (push path flycheck-perl-include-path))
+
+
+(defun msen/run-perl-script ()
+  "Run a Perl script."
+  (interactive)
+  (let* ((buffer (current-buffer))
+         (filename (buffer-file-name buffer)))
+    ;; XXX is there seriously no better way to do this?
+    (save-some-buffers nil
+                       (lambda ()
+                         (eq (current-buffer) buffer)))
+    (when filename
+      (shell-command (concat "perl " filename)))))
+
+(add-hook 'cperl-mode-hook
+          (lambda ()
+            (local-set-key (kbd "C-c C-c") 'msen/run-perl-script)))
+
+;; A little hack to avoid Perl from bitching about being unable to set locale:
+(setenv "LANG" "")
 
 (defvar mode-line-cleaner-alist
   `((auto-complete-mode . "")
@@ -1136,6 +1219,8 @@
 (add-hook 'org-mode-hook (lambda () (require 'org-tempo)))
 (add-hook 'prog-mode-hook 'hl-line-mode)
 
+(setq read-process-output-max (* 1024 2048))
+
 (when (file-exists-p custom-file)
   (load custom-file))
 
@@ -1150,3 +1235,4 @@
 
 
 ;;; init.el ends here
+(put 'downcase-region 'disabled nil)
